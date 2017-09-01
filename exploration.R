@@ -1,5 +1,7 @@
 library(gdata)
 library(lubridate)
+library(data.table)
+
 activityPort<-read.xls("data/Bezoeken_HSR.xls")
 head(activityPort)
 dim(activityPort)
@@ -36,9 +38,30 @@ activityPort$actualStayArrB<-as.numeric((activityPort$BVA_BERTH_ATD-activityPort
 activityPort$actualStayDepB<-as.numeric((activityPort$BVD_BERTH_ATD-activityPort$BVD_BERTH_ATA)/60)
 hist(activityPort$actualStayArrB,breaks = 200,xlim = c(0,10000))
 hist(activityPort$actualStayDepB,breaks = 200)
+activityPort<-data.table(activityPort)
+
+sum(activityPort[,actualStayArrB<0], na.rm = T)/sum(activityPort[,!is.na(actualStayArrB)])
+
+activityPortCleaned<-activityPort[actualStayArrB>=0]
 
 
 
+
+#computing the utilization of a BerthNumber
+berchAndTime<-data.frame(activityPortCleaned$BVA_BERTH_NR,activityPortCleaned$actualStayArrB)
+berchAndTime<-data.table(berchAndTime)
+berchUse<-berchAndTime[, lapply(.SD,sum), by=list(activityPortCleaned.BVA_BERTH_NR)]
+colnames(berchUse)<-c("berchNum", "minInUse")
+beginMoment<-min(activityPort$BVA_BERTH_ATA,activityPort$BVA_BERTH_ATD, na.rm = T)
+endMoment<-max(activityPort$BVA_BERTH_ATA,activityPort$BVA_BERTH_ATD, na.rm = T)
+durationInterval<-as.numeric(difftime(endMoment,beginMoment,units = "mins"))
+berchUse$utilization<-berchUse$minInUse/durationInterval
+
+barplot(berchUse$utilization)
+abline(h=median(berchUse$utilization, na.rm = T), col="red")
+
+library(ggplot2)
+qplot(data=berchUse, x = berchNum, y=utilization)
 
 
 
