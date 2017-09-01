@@ -1,8 +1,15 @@
+# setwd("C:\\Users\\datalab1\\Downloads\\WPH2017-master\\WPH2017-master")
 library(gdata)
 library(lubridate)
-library(data.table)
-
+library(plyr)
+# import scheepsbezoeken
 activityPort<-read.xls("data/Bezoeken_HSR.xls")
+# import containerBerths
+containerPort <- read.csv("data/container.csv")
+# merge datasets
+total <- merge.data.frame(activityPort, containerPort, by.x = "BVD_BERTH_NR", by.y= "Reeferaansluitingen")
+
+
 head(activityPort)
 dim(activityPort)
 
